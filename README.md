@@ -1,10 +1,12 @@
 # boot-menu
 
-Native Android boot menu built on [Stratum](https://github.com/BrotherBoard/stratum). Runs before the Android framework via KernelSU's `post-fs-data` stage, giving you a fullscreen GLES2 overlay to redirect boot before anything else starts.
+Native Android boot menu built on [Stratum](https://github.com/BroBordd/stratum). Runs before the Android framework via KernelSU's `post-fs-data` stage, giving you a fullscreen GLES2 overlay to redirect boot before anything else starts.
+
+Prebuilt for **aarch64**.
 
 ## What's in here
 
-This repo is the KernelSU module — ready to build and flash:
+This repo is the KernelSU module — ready to flash:
 
 ```
 ├── module.prop
@@ -14,7 +16,7 @@ This repo is the KernelSU module — ready to build and flash:
     └── lib64/libstratum.so, stub.so
 ```
 
-The source lives in the [Stratum](https://github.com/BrotherBoard/stratum) repo under `stratum-boot/`. Build it with `scripts/build_module.sh` there, then the output drops here.
+Source lives in [Stratum](https://github.com/BroBordd/stratum) under `stratum-boot/`. Build with `scripts/build_module.sh` there.
 
 ## Actions
 
@@ -39,11 +41,11 @@ Auto-boots into system after a configurable timeout if no input is received.
 ## Requirements
 
 - KernelSU
-- Device supported by Stratum — see [StratumConfig.h](https://github.com/BrotherBoard/stratum/blob/main/include/StratumConfig.h)
+- aarch64 device supported by Stratum — see [StratumConfig.h](https://github.com/BroBordd/stratum/blob/main/include/StratumConfig.h)
 
 ## Related
 
-- [Stratum](https://github.com/BrotherBoard/stratum) — the framework this is built on
+- [Stratum](https://github.com/BroBordd/stratum) — the framework this is built on
 
 ## License
 

@@ -17,6 +17,6 @@ echo "$(date) launching stratum_binary" >> $LOG
 
 LD_PRELOAD=/system/lib64/stub.so \
 LD_LIBRARY_PATH=/system/lib64:/vendor/lib64 \
-/system/bin/stratum_binary 0 >> $LOG 2>&1
+/system/bin/stratum_binary 0 0 >> $LOG 2>&1
 
 echo "$(date) stratum_binary exited $?" >> $LOG

@@ -2,7 +2,7 @@
 
 Native Android boot menu built on [Stratum](https://github.com/BroBordd/stratum). Runs before the Android framework via KernelSU's `post-fs-data` stage, giving you a fullscreen GLES2 overlay to redirect boot before anything else starts.
 
-Prebuilt for **aarch64**.
+Supports touch and hardware buttons. Prebuilt for **aarch64**.
 
 ![boot menu](https://github.com/user-attachments/assets/91b93f88-13d5-4b70-900c-408eb571822b)
 

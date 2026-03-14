@@ -1,7 +1,6 @@
-id=stratum-boot
-name=Stratum Boot Overlay
-author=BrotherBoard
-version=1.0
+id=boot-menu
+name=Boot Menu
+version=v1.0
 versionCode=1
-description=Stratum GLES overlay at boot. Runs on top of bootanimation, exits into OneUI.
-minKernelSU=1
+author=BrotherBoard
+description=Native Android boot menu. Runs pre-framework via KernelSU. Built on Stratum.

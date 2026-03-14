@@ -4,6 +4,8 @@ Native Android boot menu built on [Stratum](https://github.com/BroBordd/stratum)
 
 Prebuilt for **aarch64**.
 
+![boot menu](https://github.com/user-attachments/assets/91b93f88-13d5-4b70-900c-408eb571822b)
+
 ## What's in here
 
 This repo is the KernelSU module — ready to flash:

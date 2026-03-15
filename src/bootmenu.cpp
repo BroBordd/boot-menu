@@ -65,7 +65,7 @@ struct BootItem {
 
 static const BootItem ITEMS[] = {
     { "CONTINUE TO SYSTEM", ">", nullptr,
-      "CONTINUE BOOTING ANDROID?",
+      "DISMISS BOOT MENU?",
       0.25f, 0.85f, 0.45f },
     { "REBOOT", "R", "reboot",
       "REBOOT THE DEVICE?",
@@ -103,6 +103,20 @@ static void loadExtras() {
 enum class Screen { MENU, CONFIRM, EXTRAS };
 
 static bool gDryRun = false;
+
+// ── boot status ───────────────────────────────────────────────────────────────
+
+static bool gBootCompleted = false;
+
+static void checkBootCompleted() {
+    if (gBootCompleted) return;
+    FILE* f = popen("getprop sys.boot_completed", "r");
+    if (!f) return;
+    char buf[8] = {};
+    fgets(buf, sizeof(buf), f);
+    pclose(f);
+    if (buf[0] == '1') gBootCompleted = true;
+}
 
 static void execAction(int idx) {
     const BootItem& it = ITEMS[idx];
@@ -153,7 +167,10 @@ int main(int argc, char** argv) {
     GLuint fs   = compileShader(GL_FRAGMENT_SHADER, FSH);
     GLuint prog = glCreateProgram();
     glAttachShader(prog, vs); glAttachShader(prog, fs);
-    glLinkProgram(prog); glUseProgram(prog);
+    glLinkProgram(prog);
+    glDetachShader(prog, vs); glDeleteShader(vs);
+    glDetachShader(prog, fs); glDeleteShader(fs);
+    glUseProgram(prog);
 
     gPosLoc   = glGetAttribLocation(prog,  "pos");
     gColorLoc = glGetUniformLocation(prog, "color");
@@ -172,6 +189,7 @@ int main(int argc, char** argv) {
 
     float ignoreInputUntil = 0.f;
     float startTime = mono_now();
+    float lastBootCheck = 0.f;
 
     s.onKey([&](const KeyEvent& e) {
         if (e.action != KeyAction::DOWN && e.action != KeyAction::REPEAT) return;
@@ -203,8 +221,9 @@ int main(int argc, char** argv) {
                 } else {
                     int idx = extrasSel - 1;
                     execExtra(gExtras[idx]);
+                    screen    = Screen::MENU;
                     extrasSel = 0;
-                    ignoreInputUntil = mono_now() + 0.5f;
+                    ignoreInputUntil = mono_now() + 1.5f;
                 }
             }
         }
@@ -212,6 +231,7 @@ int main(int argc, char** argv) {
 
     s.onTouch([&](const TouchEvent& e) {
         if (e.action != TouchAction::DOWN) return;
+        if (mono_now() < ignoreInputUntil) return;
         Stratum::vibrate(28);
         std::lock_guard<std::mutex> lk(mtx);
         if (screen == Screen::MENU) {
@@ -245,17 +265,16 @@ int main(int argc, char** argv) {
             int tapped = (int)((e.y - startY) / itemH);
             if (tapped < 0 || tapped >= total) return;
             if (tapped == extrasSel) {
-                // second tap on already-selected item → execute
                 if (tapped == 0) {
                     screen = Screen::MENU;
                 } else {
                     int idx = tapped - 1;
                     execExtra(gExtras[idx]);
+                    screen    = Screen::MENU;
                     extrasSel = 0;
-                    ignoreInputUntil = mono_now() + 0.5f;
+                    ignoreInputUntil = mono_now() + 1.5f;
                 }
             } else {
-                // first tap → just highlight, don't run anything yet
                 extrasSel = tapped;
             }
         }
@@ -263,6 +282,12 @@ int main(int argc, char** argv) {
 
     s.onFrame([&](float t) {
         float now = mono_now();
+
+        // poll boot status every 2s
+        if (now - lastBootCheck > 2.0f) {
+            checkBootCompleted();
+            lastBootCheck = now;
+        }
 
         if (timeout > 0.0f && (now - startTime) >= timeout) {
             execAction(0);
@@ -413,27 +438,38 @@ int main(int argc, char** argv) {
                 Text::draw(">", 0.92f, labelY, textSize*0.8f, it.ar*dimA, it.ag*dimA, it.ab*dimA);
         }
 
-        // progress bar
+        // ── boot status bar ───────────────────────────────────────────────
         {
             float barY0  = startY + ITEM_COUNT * itemH + 0.012f;
             float lbSize = fminf(0.022f, 0.85f * asp / 34);
-            Text::draw("ANDROID IS BOOTING IN BACKGROUND", 0.05f, barY0, lbSize,
-                       0.22f*dimA, 0.50f*dimA, 0.28f*dimA);
-            float bgY0 = barY0 + lbSize + 0.006f, bgY1 = bgY0 + 0.018f;
-            drawRoundRect(0.05f, bgY0, 0.95f, bgY1, 0.08f, 0.10f, 0.08f, dimA, 0.009f);
-            const float trackX0 = 0.05f, trackX1 = 0.95f;
-            const float trackW  = trackX1 - trackX0;
-            const float bandW   = 0.26f * trackW;
-            const float travel  = trackW - bandW;
-            float period  = 1.6f;
-            float elapsed = now - startTime;
-            float cycle   = fmodf(elapsed, period * 2.0f);
-            float u       = (cycle < period) ? cycle / period : 1.0f - (cycle - period) / period;
-            float u2 = u * u, u3 = u2 * u;
-            float pos = u3 * (u * (u * 6.0f - 15.0f) + 10.0f);
-            float bx0 = trackX0 + pos * travel;
-            float bx1 = bx0 + bandW;
-            drawRoundRect(bx0, bgY0, bx1, bgY1, 0.15f, 0.75f*dimA, 0.30f, 0.85f*dimA, 0.009f);
+
+            if (gBootCompleted) {
+                // solid green filled bar + "SYSTEM BOOTED" label
+                Text::draw("SYSTEM BOOTED", 0.05f, barY0, lbSize,
+                           0.20f*dimA, 0.80f*dimA, 0.35f*dimA);
+                float bgY0 = barY0 + lbSize + 0.006f, bgY1 = bgY0 + 0.018f;
+                drawRoundRect(0.05f, bgY0, 0.95f, bgY1, 0.08f, 0.22f, 0.10f, dimA, 0.009f);
+                drawRoundRect(0.05f, bgY0, 0.95f, bgY1, 0.15f, 0.75f*dimA, 0.30f, 0.85f*dimA, 0.009f);
+            } else {
+                // animated indeterminate bar
+                Text::draw("ANDROID IS BOOTING IN BACKGROUND", 0.05f, barY0, lbSize,
+                           0.22f*dimA, 0.50f*dimA, 0.28f*dimA);
+                float bgY0 = barY0 + lbSize + 0.006f, bgY1 = bgY0 + 0.018f;
+                drawRoundRect(0.05f, bgY0, 0.95f, bgY1, 0.08f, 0.10f, 0.08f, dimA, 0.009f);
+                const float trackX0 = 0.05f, trackX1 = 0.95f;
+                const float trackW  = trackX1 - trackX0;
+                const float bandW   = 0.26f * trackW;
+                const float travel  = trackW - bandW;
+                float period  = 1.6f;
+                float elapsed = now - startTime;
+                float cycle   = fmodf(elapsed, period * 2.0f);
+                float u       = (cycle < period) ? cycle / period : 1.0f - (cycle - period) / period;
+                float u2 = u * u, u3 = u2 * u;
+                float pos = u3 * (u * (u * 6.0f - 15.0f) + 10.0f);
+                float bx0 = trackX0 + pos * travel;
+                float bx1 = bx0 + bandW;
+                drawRoundRect(bx0, bgY0, bx1, bgY1, 0.15f, 0.75f*dimA, 0.30f, 0.85f*dimA, 0.009f);
+            }
         }
 
         // footer

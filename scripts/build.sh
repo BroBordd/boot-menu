@@ -3,7 +3,12 @@ set -e
 
 ROOT=$(dirname $0)/..
 STRATUM=${STRATUM:-$ROOT/../stratum}
-LIBS_DIR=$ROOT/module/system/lib64
+# prefer freshly built libs from stratum/bin, fall back to module/system/lib64
+if [[ -f $STRATUM/bin/libstratum.so ]]; then
+    LIBS_DIR=$STRATUM/bin
+else
+    LIBS_DIR=$ROOT/module/system/lib64
+fi
 BIN_OUT=$ROOT/module/system/bin/stratum_binary
 EXTRAS_OUT=$ROOT/module/extras
 EXTRAS_SRC=$ROOT/apps/utils
@@ -45,6 +50,8 @@ if [[ ${#ONLY[@]} -gt 0 ]]; then
     BUILD_MENU=0
 fi
 
+echo "[*] Using libs from: $LIBS_DIR"
+
 INCLUDES="\
   -I$STRATUM/include \
   -I$STRATUM/include/v34/arm64/include/frameworks/native/libs/gui/include \
@@ -77,7 +84,7 @@ INCLUDES="\
   -I$STRATUM/include/v34/arm64/include/system/libhwbinder/include \
   -I$STRATUM/include/logging/liblog/include"
 
-FLAGS="-std=c++17 -target aarch64-linux-android34 -D__BIONIC__ -w -include $STRATUM/include/compat.h"
+FLAGS="-std=c++17 -O2 -march=armv8-a -target aarch64-linux-android34 -D__BIONIC__ -w -include $STRATUM/include/compat.h"
 LIBS="-L$LIBS_DIR -L/system/lib64 -lstratum -lgui -lui -lEGL -lGLESv2 -lbinder -lutils -llog -Wl,--allow-shlib-undefined -Wl,--unresolved-symbols=ignore-all"
 
 if [[ $BUILD_MENU -eq 1 ]]; then

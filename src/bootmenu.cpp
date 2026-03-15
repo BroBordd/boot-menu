@@ -3,8 +3,11 @@
 #include "StratumArgs.h"
 #include <GLES2/gl2.h>
 #include <linux/input-event-codes.h>
+#include <unistd.h>
 #include <math.h>
 #include <mutex>
+#include <thread>
+#include <atomic>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,16 +109,19 @@ static bool gDryRun = false;
 
 // ── boot status ───────────────────────────────────────────────────────────────
 
-static bool gBootCompleted = false;
+static std::atomic_bool gBootCompleted{false};
 
-static void checkBootCompleted() {
-    if (gBootCompleted) return;
-    FILE* f = popen("getprop sys.boot_completed", "r");
-    if (!f) return;
-    char buf[8] = {};
-    fgets(buf, sizeof(buf), f);
-    pclose(f);
-    if (buf[0] == '1') gBootCompleted = true;
+static void bootCheckThread() {
+    while (!gBootCompleted) {
+        FILE* f = popen("getprop sys.boot_completed", "r");
+        if (f) {
+            char buf[8] = {};
+            fgets(buf, sizeof(buf), f);
+            pclose(f);
+            if (buf[0] == '1') gBootCompleted = true;
+        }
+        if (!gBootCompleted) sleep(2);
+    }
 }
 
 static void execAction(int idx) {
@@ -161,7 +167,6 @@ int main(int argc, char** argv) {
 
     Stratum s;
     if (!s.init()) return 1;
-    Text::init(s.aspect());
 
     GLuint vs   = compileShader(GL_VERTEX_SHADER,   VSH);
     GLuint fs   = compileShader(GL_FRAGMENT_SHADER, FSH);
@@ -178,6 +183,8 @@ int main(int argc, char** argv) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    Text::init(s.aspect(), prog);
+
     std::mutex mtx;
     Screen screen     = Screen::MENU;
     int    menuSel    = 0;
@@ -189,7 +196,8 @@ int main(int argc, char** argv) {
 
     float ignoreInputUntil = 0.f;
     float startTime = mono_now();
-    float lastBootCheck = 0.f;
+
+    std::thread bootThread(bootCheckThread);
 
     s.onKey([&](const KeyEvent& e) {
         if (e.action != KeyAction::DOWN && e.action != KeyAction::REPEAT) return;
@@ -282,12 +290,6 @@ int main(int argc, char** argv) {
 
     s.onFrame([&](float t) {
         float now = mono_now();
-
-        // poll boot status every 2s
-        if (now - lastBootCheck > 2.0f) {
-            checkBootCompleted();
-            lastBootCheck = now;
-        }
 
         if (timeout > 0.0f && (now - startTime) >= timeout) {
             execAction(0);
@@ -444,14 +446,12 @@ int main(int argc, char** argv) {
             float lbSize = fminf(0.022f, 0.85f * asp / 34);
 
             if (gBootCompleted) {
-                // solid green filled bar + "SYSTEM BOOTED" label
                 Text::draw("SYSTEM BOOTED", 0.05f, barY0, lbSize,
                            0.20f*dimA, 0.80f*dimA, 0.35f*dimA);
                 float bgY0 = barY0 + lbSize + 0.006f, bgY1 = bgY0 + 0.018f;
                 drawRoundRect(0.05f, bgY0, 0.95f, bgY1, 0.08f, 0.22f, 0.10f, dimA, 0.009f);
                 drawRoundRect(0.05f, bgY0, 0.95f, bgY1, 0.15f, 0.75f*dimA, 0.30f, 0.85f*dimA, 0.009f);
             } else {
-                // animated indeterminate bar
                 Text::draw("ANDROID IS BOOTING IN BACKGROUND", 0.05f, barY0, lbSize,
                            0.22f*dimA, 0.50f*dimA, 0.28f*dimA);
                 float bgY0 = barY0 + lbSize + 0.006f, bgY1 = bgY0 + 0.018f;
@@ -550,5 +550,7 @@ int main(int argc, char** argv) {
     });
 
     s.run();
+    gBootCompleted = true;
+    bootThread.join();
     return 0;
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-ROOT=$(dirname $0)/..
+ROOT=$(realpath $(dirname $0)/..)
 OUT=$ROOT/boot-menu.zip
 
 echo "[*] Building module zip..."

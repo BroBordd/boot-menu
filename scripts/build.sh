@@ -84,6 +84,7 @@ LIBS="-L$LIBS_DIR -L/system/lib64 -lstratum -lgui -lui -lEGL -lGLESv2 -lbinder -
 if [[ $BUILD_MENU -eq 1 ]]; then
     echo "[*] Building bootmenu..."
     clang++ $FLAGS $INCLUDES $ROOT/src/bootmenu.cpp $LIBS -o $BIN_OUT
+    chmod +x $BIN_OUT
     echo "[*] Done -> $BIN_OUT"
 fi
 
@@ -107,6 +108,7 @@ if [[ $BUILD_EXTRAS -eq 1 ]]; then
         name=$(basename $f .cpp)
         echo "[*] Building extra: $name..."
         clang++ $FLAGS $INCLUDES $f $LIBS -o $EXTRAS_OUT/$name
+        chmod +x $EXTRAS_OUT/$name
         echo "[*] Done -> $EXTRAS_OUT/$name"
     done
 fi

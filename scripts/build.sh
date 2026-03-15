@@ -6,7 +6,7 @@ STRATUM=${STRATUM:-$ROOT/../stratum}
 LIBS_DIR=$ROOT/module/system/lib64
 BIN_OUT=$ROOT/module/system/bin/stratum_binary
 EXTRAS_OUT=$ROOT/module/extras
-EXTRAS_SRC=$ROOT/src/extras
+EXTRAS_SRC=$ROOT/apps/utils
 
 if [[ ! -d $STRATUM/include ]]; then
     echo "[!] Stratum headers not found at $STRATUM"
@@ -41,7 +41,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# if specific extras were named, skip menu unless explicitly wanted
 if [[ ${#ONLY[@]} -gt 0 ]]; then
     BUILD_MENU=0
 fi
@@ -92,7 +91,7 @@ if [[ $BUILD_EXTRAS -eq 1 ]]; then
     if [[ ${#ONLY[@]} -gt 0 ]]; then
         targets=()
         for name in "${ONLY[@]}"; do
-            f=$ROOT/src/extras/$name.cpp
+            f=$EXTRAS_SRC/$name.cpp
             if [[ ! -f $f ]]; then
                 echo "[!] Extra not found: $name"
                 exit 1
@@ -100,11 +99,11 @@ if [[ $BUILD_EXTRAS -eq 1 ]]; then
             targets+=("$f")
         done
     else
-        targets=($ROOT/src/extras/*.cpp)
+        targets=($EXTRAS_SRC/*.cpp)
     fi
 
     for f in "${targets[@]}"; do
-        [[ -e $f ]] || { echo "[!] No extras found in extras/"; break; }
+        [[ -e $f ]] || { echo "[!] No extras found in apps/utils/"; break; }
         name=$(basename $f .cpp)
         echo "[*] Building extra: $name..."
         clang++ $FLAGS $INCLUDES $f $LIBS -o $EXTRAS_OUT/$name

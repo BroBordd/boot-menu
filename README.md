@@ -1,53 +1,42 @@
 # boot-menu
 
-Native Android boot menu built on [Stratum](https://github.com/BroBordd/stratum). Runs before the Android framework via KernelSU's `post-fs-data` stage, giving you a fullscreen GLES2 overlay to redirect boot before anything else starts.
+A bare-metal boot menu for rooted Android devices, built on [Stratum](https://github.com/BroBordd/stratum). Runs before the Android framework starts, giving you full control over the boot process.
 
-Supports touch and hardware buttons. Prebuilt for **aarch64**.
+![Boot Menu](https://github.com/user-attachments/assets/07c84df3-df0b-45ab-9b35-8c32846863a0)
 
-![boot menu](https://github.com/user-attachments/assets/07c84df3-df0b-45ab-9b35-8c32846863a0)
+## Features
 
-## What's in here
+- Continue to system, reboot, recovery, download mode, or power off
+- Confirms all destructive actions before executing
+- Tracks Android boot status in real time — animated progress bar while booting, solid green when ready
+- Launches extra utility apps from the extras folder via the Advanced menu
+- Touch and hardware key navigation (volume up/down to navigate, power to confirm)
+- Auto-continues to system after a configurable timeout
+- Dry-run mode for testing without executing commands
 
-This repo is the KernelSU module — ready to flash:
+## Installation
 
+Flash the zip via KernelSU or compatible root manager. The module installs to `/data/adb/modules/boot-menu/` and hooks into early boot via `post-fs-data.sh`. The zip is built for a specific device — check the filename for your target.
+
+## Extras
+
+Drop any [Stratum](https://github.com/BroBordd/stratum)-based binary into `/data/adb/modules/boot-menu/extras/` and it will appear in the Advanced menu. The following extras from [stratum-apps](https://github.com/BroBordd/stratum-apps) are included by default:
+
+- **terminal** — PTY-backed terminal emulator with touch keyboard
+- **calculator** — Lightweight expression calculator
+- **brickbreaker** — Arcade-style brick breaker game
+- **signal** — Real-time signal and waveform visualizer
+- **sysinfo** — System information and diagnostics viewer
+
+## Building
+
+Requires [Stratum](https://github.com/BroBordd/stratum) cloned alongside this repo, or set `STRATUM=/path/to/stratum`.
+
+```bash
+bash scripts/build.sh        # build everything
+bash scripts/build.sh -m     # bootmenu only
+bash scripts/build.sh -e     # extras only
 ```
-├── module.prop
-├── post-fs-data.sh
-└── system/
-    ├── bin/stratum, stratum_binary
-    └── lib64/libstratum.so, stub.so
-```
-
-Source lives in [Stratum](https://github.com/BroBordd/stratum) under `stratum-boot/`. Build with `scripts/build_module.sh` there.
-
-## Actions
-
-| Entry | Command |
-|---|---|
-| Continue to System | *(exit, let boot proceed)* |
-| Reboot | `reboot` |
-| Recovery | `reboot recovery` |
-| Download Mode | `reboot download` |
-| Power Off | `reboot -p` |
-
-## Controls
-
-| Input | Action |
-|---|---|
-| Volume Up / Down | Navigate |
-| Power | Confirm |
-| Tap item | Select / open confirm dialog |
-
-Auto-boots into system after a configurable timeout if no input is received.
-
-## Requirements
-
-- KernelSU
-- aarch64 device supported by Stratum — see [StratumConfig.h](https://github.com/BroBordd/stratum/blob/main/include/StratumConfig.h)
-
-## Related
-
-- [Stratum](https://github.com/BroBordd/stratum) — the framework this is built on
 
 ## License
 

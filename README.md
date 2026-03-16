@@ -4,7 +4,7 @@ Native Android boot menu built on [Stratum](https://github.com/BroBordd/stratum)
 
 Supports touch and hardware buttons. Prebuilt for **aarch64**.
 
-![boot menu](https://github.com/user-attachments/assets/91b93f88-13d5-4b70-900c-408eb571822b)
+![boot menu](https://github.com/user-attachments/assets/07c84df3-df0b-45ab-9b35-8c32846863a0)
 
 ## What's in here
 

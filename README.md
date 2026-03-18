@@ -9,24 +9,16 @@ A bare-metal boot menu for rooted Android devices, built on [Stratum](https://gi
 - Continue to system, reboot, recovery, download mode, or power off
 - Confirms all destructive actions before executing
 - Tracks Android boot status in real time — animated progress bar while booting, solid green when ready
-- Launches extra utility apps from the extras folder via the Advanced menu
 - Touch and hardware key navigation (volume up/down to navigate, power to confirm)
+- Launches extra utility apps from the Advanced menu
 - Auto-continues to system after a configurable timeout
 - Dry-run mode for testing without executing commands
 
 ## Installation
 
-Flash the zip via KernelSU or compatible root manager. The module installs to `/data/adb/modules/boot-menu/` and hooks into early boot via `post-fs-data.sh`. The zip is built for a specific device — check the filename for your target.
+Flash the zip via KernelSU or compatible root manager. The module installs to `/data/adb/modules/boot-menu/` and hooks into early boot via `post-fs-data.sh`. Check the release filename for your target device.
 
-## Extras
-
-Drop any [Stratum](https://github.com/BroBordd/stratum)-based binary into `/data/adb/modules/boot-menu/extras/` and it will appear in the Advanced menu. The following extras from [stratum-apps](https://github.com/BroBordd/stratum-apps) are included by default:
-
-- **terminal** — PTY-backed terminal emulator with touch keyboard
-- **calculator** — Lightweight expression calculator
-- **brickbreaker** — Arcade-style brick breaker game
-- **signal** — Real-time signal and waveform visualizer
-- **sysinfo** — System information and diagnostics viewer
+Extras drop into `/data/adb/modules/boot-menu/extras/` — any [Stratum](https://github.com/BroBordd/stratum)-based binary placed there will appear in the Advanced menu. Extras from [stratum-apps](https://github.com/BroBordd/stratum-apps) are included in the release zip by default.
 
 ## Building
 
@@ -43,25 +35,21 @@ Or if already cloned:
 git submodule update --init --recursive
 ```
 
-### 2. Build Stratum for your device
+### 2. Add your device to Stratum
 
-Your device must have a folder under `stratum/devices/<model>/` with `StratumConfig.h`. See [Stratum](https://github.com/BroBordd/stratum) for details on adding a new device.
+Your device must have a folder under `stratum/devices/<model>/` with `StratumConfig.h`. See [Stratum](https://github.com/BroBordd/stratum) for details.
 
-```bash
-bash stratum/scripts/build.sh <device> -l
-```
-
-### 3. Build boot-menu
+### 3. Build
 
 ```bash
-bash scripts/build.sh <device>         # build everything
-bash scripts/build.sh <device> -m      # bootmenu only
-bash scripts/build.sh <device> -e      # extras only
+bash scripts/build.sh <device>       # build everything + zip
+bash scripts/build.sh <device> -m    # boot menu only
+bash scripts/build.sh <device> -e    # extras only
 ```
 
-Output zip: `<device>-boot-menu.zip`
+Output zip: `stratum/devices/<device>/out/<device>-boot-menu.zip`
 
-### 4. Run for testing (without flashing)
+### 4. Test without flashing
 
 ```bash
 bash scripts/run.sh <device>

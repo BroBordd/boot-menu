@@ -50,8 +50,8 @@ if [ ! -d "$DEVICE_DIR" ]; then
 fi
 
 if [ ! -f "$OUT_LIBS/libstratum.so" ]; then
-    echo "error: libstratum.so not found — run stratum's build.sh -l first"
-    exit 1
+    echo "[*] libstratum.so not found, building stratum..."
+    bash "$STRATUM/scripts/build.sh" "$DEVICE" -l
 fi
 
 # ── bootmenu ──────────────────────────────────────────────────────────────────

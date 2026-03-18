@@ -80,7 +80,7 @@ for f in brickbreaker calculator signal sysinfo terminal; do
     [ -f "$OUT_EXTRAS/$f" ] && cp "$OUT_EXTRAS/$f" "$STAGING/extras/$f"
 done
 
-ZIP="$ROOT/${DEVICE}-boot-menu.zip"
+ZIP="$STRATUM/devices/$DEVICE/out/${DEVICE}-boot-menu.zip"
 cd "$STAGING" && zip -r9 "$ZIP" . > /dev/null
 cd "$ROOT"
 rm -rf "$STAGING"

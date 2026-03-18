@@ -10,7 +10,7 @@ if [ -z "$DEVICE" ]; then
     exit 1
 fi
 
-if [ -z "$(ls -A $STRATUM 2>/dev/null)" ]; then
+if [ ! -f "$STRATUM/scripts/build.sh" ]; then
     echo "error: stratum submodule not initialized"
     echo "run:   git submodule update --init --recursive"
     exit 1

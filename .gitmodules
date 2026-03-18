@@ -1,4 +1,4 @@
 [submodule "stratum"]
-	path = stratum
-	url = https://github.com/BroBordd/stratum
-    fetchRecurseSubmodules = true
+        path = stratum
+        url = https://github.com/BroBordd/stratum
+        fetchRecurseSubmodules = true

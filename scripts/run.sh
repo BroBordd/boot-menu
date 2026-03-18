@@ -13,4 +13,17 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-bash "$STRATUM/scripts/run_app.sh" "$1" stratum_binary
+DEVICE=$1
+DEVICE_DIR="$STRATUM/devices/$DEVICE"
+OUT_BINS="$DEVICE_DIR/out/bins"
+OUT_LIBS="$DEVICE_DIR/out/libs"
+
+if [ ! -d "$DEVICE_DIR" ]; then
+    echo "error: '$DEVICE_DIR' not found"
+    exit 1
+fi
+
+su -c "EXTRAS_DIR=$OUT_BINS \
+       LD_PRELOAD=$OUT_LIBS/stub.so \
+       LD_LIBRARY_PATH=$OUT_LIBS:/system/lib64:/vendor/lib64 \
+       $OUT_BINS/stratum_binary"

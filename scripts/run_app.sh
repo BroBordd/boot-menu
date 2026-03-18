@@ -1,1 +1,0 @@
-../stratum/scripts/run_app.sh

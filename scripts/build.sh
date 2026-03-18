@@ -19,6 +19,7 @@ fi
 DEVICE_DIR="$STRATUM/devices/$DEVICE"
 OUT_BINS="$DEVICE_DIR/out/bins"
 OUT_LIBS="$DEVICE_DIR/out/libs"
+OUT_EXTRAS="$DEVICE_DIR/out/extras"
 
 if [ ! -d "$DEVICE_DIR" ]; then
     echo "error: '$DEVICE_DIR' not found"
@@ -39,7 +40,7 @@ done
 # ── autobuild stratum if needed ───────────────────────────────────────────────
 if [ ! -f "$OUT_LIBS/libstratum.so" ]; then
     echo "[*] libstratum.so not found, building stratum..."
-    bash "$STRATUM/scripts/build.sh" "$DEVICE" -l
+    bash "$STRATUM/scripts/build.sh" "$DEVICE" -l || true
 fi
 
 # ── bootmenu ──────────────────────────────────────────────────────────────────
@@ -54,8 +55,11 @@ if [ $BUILD_EXTRAS -eq 1 ]; then
         echo "error: stratum/apps not initialized — run: git submodule update --init --recursive"
         exit 1
     fi
+    mkdir -p "$OUT_EXTRAS"
     for f in "$APPS_DIR"/utils/*.cpp; do
+        name=$(basename "$f" .cpp)
         bash "$STRATUM/scripts/build_app.sh" "$DEVICE" "$f"
+        mv "$OUT_BINS/$name" "$OUT_EXTRAS/$name"
     done
 fi
 
@@ -64,6 +68,7 @@ echo "[*] Packaging module zip..."
 
 STAGING="$ROOT/.staging"
 rm -rf "$STAGING"
+mkdir -p "$STAGING/system/lib64" "$STAGING/system/bin" "$STAGING/extras"
 cp -r "$ROOT/module/." "$STAGING/"
 mkdir -p "$STAGING/system/lib64" "$STAGING/system/bin" "$STAGING/extras"
 
@@ -72,7 +77,7 @@ cp "$OUT_LIBS/stub.so"        "$STAGING/system/lib64/stub.so"
 cp "$OUT_BINS/stratum_binary" "$STAGING/system/bin/stratum_binary"
 
 for f in brickbreaker calculator signal sysinfo terminal; do
-    [ -f "$STRATUM/devices/$DEVICE/out/extras/$f" ] && cp "$STRATUM/devices/$DEVICE/out/extras/$f" "$STAGING/extras/$f"
+    [ -f "$OUT_EXTRAS/$f" ] && cp "$OUT_EXTRAS/$f" "$STAGING/extras/$f"
 done
 
 ZIP="$ROOT/${DEVICE}-boot-menu.zip"

@@ -30,12 +30,41 @@ Drop any [Stratum](https://github.com/BroBordd/stratum)-based binary into `/data
 
 ## Building
 
-Requires [Stratum](https://github.com/BroBordd/stratum) cloned alongside this repo, or set `STRATUM=/path/to/stratum`.
+### 1. Clone with submodules
 
 ```bash
-bash scripts/build.sh        # build everything
-bash scripts/build.sh -m     # bootmenu only
-bash scripts/build.sh -e     # extras only
+git clone --recurse-submodules https://github.com/BroBordd/boot-menu
+cd boot-menu
+```
+
+Or if already cloned:
+
+```bash
+git submodule update --init --recursive
+```
+
+### 2. Build Stratum for your device
+
+Your device must have a folder under `stratum/devices/<model>/` with `StratumConfig.h`. See [Stratum](https://github.com/BroBordd/stratum) for details on adding a new device.
+
+```bash
+bash stratum/scripts/build.sh <device> -l
+```
+
+### 3. Build boot-menu
+
+```bash
+bash scripts/build.sh <device>         # build everything
+bash scripts/build.sh <device> -m      # bootmenu only
+bash scripts/build.sh <device> -e      # extras only
+```
+
+Output zip: `<device>-boot-menu.zip`
+
+### 4. Run for testing (without flashing)
+
+```bash
+bash scripts/run.sh <device>
 ```
 
 ## License

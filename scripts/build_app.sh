@@ -1,0 +1,1 @@
+../stratum/scripts/build_app.sh

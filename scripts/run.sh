@@ -23,7 +23,9 @@ if [ ! -d "$DEVICE_DIR" ]; then
     exit 1
 fi
 
-su -c "EXTRAS_DIR=$OUT_BINS \
+OUT_EXTRAS="$DEVICE_DIR/out/extras"
+
+su -c "EXTRAS_DIR=$OUT_EXTRAS \
        LD_PRELOAD=$OUT_LIBS/stub.so \
        LD_LIBRARY_PATH=$OUT_LIBS:/system/lib64:/vendor/lib64 \
        $OUT_BINS/stratum_binary"

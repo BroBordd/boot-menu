@@ -552,5 +552,5 @@ int main(int argc, char** argv) {
     s.run();
     gBootCompleted = true;
     bootThread.join();
-    return 0;
+    _exit(0);
 }

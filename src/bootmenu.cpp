@@ -90,6 +90,7 @@ static const int EXTRAS_IDX = 5;
 
 static std::vector<std::string> gExtras;
 static const char* EXTRAS_DIR = getenv("EXTRAS_DIR") ? getenv("EXTRAS_DIR") : "/data/adb/modules/boot-menu/extras";
+static const char* LIB_DIR    = getenv("LIB_DIR")    ? getenv("LIB_DIR")    : "/data/adb/modules/boot-menu/system/lib64";
 
 static void loadExtras() {
     gExtras.clear();
@@ -106,8 +107,6 @@ static void loadExtras() {
 enum class Screen { MENU, CONFIRM, EXTRAS };
 
 static bool gDryRun = false;
-
-// ── boot status ───────────────────────────────────────────────────────────────
 
 static std::atomic_bool gBootCompleted{false};
 
@@ -145,10 +144,10 @@ static void execExtra(const std::string& name) {
     char buf[512];
     snprintf(buf, sizeof(buf),
         "/system/bin/sh -c '"
-        "export LD_LIBRARY_PATH=/data/adb/modules/boot-menu/system/lib64:/system/lib64; "
-        "export LD_PRELOAD=/data/adb/modules/boot-menu/system/lib64/stub.so; "
+        "export LD_LIBRARY_PATH=%s:/system/lib64; "
+        "export LD_PRELOAD=%s/stub.so; "
         "%s/%s --timeout=0'",
-        EXTRAS_DIR, name.c_str());
+        LIB_DIR, LIB_DIR, EXTRAS_DIR, name.c_str());
     system(buf);
 }
 
@@ -347,7 +346,6 @@ int main(int argc, char** argv) {
         Text::draw("v1.0", 0.05f, 0.04f + hdrSize + 0.005f + subSize + 0.004f, verSize, 0.12f, 0.14f, 0.18f);
         drawRect(0.05f, 0.155f, 0.95f, 0.157f, 0.18f, 0.35f, 0.70f, 0.8f);
 
-        // ── extras screen ─────────────────────────────────────────────────
         if (curScreen == Screen::EXTRAS) {
             float itemH  = 0.085f;
             float startY = 0.175f;
@@ -397,8 +395,6 @@ int main(int argc, char** argv) {
             return;
         }
 
-        // ── main menu ─────────────────────────────────────────────────────
-
         float itemH  = 0.095f;
         float startY = 0.175f;
         int maxLen   = 0;
@@ -440,7 +436,6 @@ int main(int argc, char** argv) {
                 Text::draw(">", 0.92f, labelY, textSize*0.8f, it.ar*dimA, it.ag*dimA, it.ab*dimA);
         }
 
-        // ── boot status bar ───────────────────────────────────────────────
         {
             float barY0  = startY + ITEM_COUNT * itemH + 0.012f;
             float lbSize = fminf(0.022f, 0.85f * asp / 34);
@@ -472,7 +467,6 @@ int main(int argc, char** argv) {
             }
         }
 
-        // footer
         {
             const char* hint = "VOL navigate   TOUCH select   PWR confirm";
             float fs2 = fminf(0.022f, 0.90f * asp / (int)strlen(hint));
@@ -480,70 +474,50 @@ int main(int argc, char** argv) {
             float vs2 = fminf(0.018f, 0.90f * asp / (int)strlen(copy));
             float hintY = 0.945f - fs2;
             Text::draw(hint, 0.05f, hintY, fs2, 0.18f*dimA, 0.20f*dimA, 0.26f*dimA);
-            float cpW      = strlen(copy) * vs2 / asp;
-            float cpX      = 0.95f - cpW;
-            float cpMargin = 0.05f;
-            float cpY      = 1.0f - vs2 - cpMargin / 4;
-            Text::draw(copy, cpX, cpY, vs2, 0.16f*dimA, 0.22f*dimA, 0.32f*dimA);
+            float cpW = strlen(copy) * vs2 / asp;
+            Text::draw(copy, 0.95f - cpW, 1.0f - vs2 - 0.012f, vs2, 0.16f*dimA, 0.22f*dimA, 0.32f*dimA);
         }
         drawRect(0.f, 0.996f, 1.f, 1.f, 0.25f, 0.50f, 1.0f, 0.7f);
 
-        // confirm dialog
         if (curScreen == Screen::CONFIRM && curPending >= 0) {
             const BootItem& pit = ITEMS[curPending];
-
             drawRect(0.f, 0.f, 1.f, 1.f, 0.0f, 0.0f, 0.0f, 0.55f);
-
             float dx0=0.08f, dx1=0.92f, dy0=0.36f, dy1=0.70f;
             drawRoundRect(dx0, dy0, dx1, dy1, 0.08f, 0.09f, 0.11f, 0.97f, 0.018f);
-
             float stripH = 0.032f;
             drawRoundRect(dx0, dy0, dx1, dy0+stripH, pit.ar*0.55f, pit.ag*0.55f, pit.ab*0.55f, 1.0f, 0.018f);
             drawRect(dx0, dy0+stripH*0.5f, dx1, dy0+stripH, pit.ar*0.55f, pit.ag*0.55f, pit.ab*0.55f, 1.0f);
-
             float qSize  = fminf(0.028f, 0.75f * asp / (int)strlen(pit.confirmMsg));
             float qWidth = strlen(pit.confirmMsg) * qSize / asp;
-            float qX     = 0.5f - qWidth * 0.5f;
-            Text::draw(pit.confirmMsg, qX, dy0 + stripH + 0.018f, qSize, 0.90f, 0.92f, 1.00f);
-
+            Text::draw(pit.confirmMsg, 0.5f - qWidth*0.5f, dy0+stripH+0.018f, qSize, 0.90f, 0.92f, 1.00f);
             {
                 const char* hintStr = "VOL toggle   PWR confirm";
                 float hSize  = fminf(0.020f, 0.75f * asp / (int)strlen(hintStr));
                 float hWidth = strlen(hintStr) * hSize / asp;
-                float hX     = 0.5f - hWidth * 0.5f;
-                Text::draw(hintStr, hX, dy0 + stripH + 0.018f + qSize + 0.010f,
+                Text::draw(hintStr, 0.5f-hWidth*0.5f, dy0+stripH+0.018f+qSize+0.010f,
                            hSize, 0.28f, 0.30f, 0.40f);
             }
-
             float btnY0=0.555f, btnY1=0.640f;
-
             bool yesSel = (curDlgSel == 0);
             drawRoundRect(0.10f, btnY0, 0.44f, btnY1,
-                yesSel ? pit.ar*0.35f : 0.10f,
-                yesSel ? pit.ag*0.35f : 0.10f,
-                yesSel ? pit.ab*0.35f : 0.10f,
-                0.95f, 0.014f);
+                yesSel?pit.ar*0.35f:0.10f, yesSel?pit.ag*0.35f:0.10f, yesSel?pit.ab*0.35f:0.10f, 0.95f, 0.014f);
             if (yesSel)
                 drawRoundRect(0.100f, btnY0, 0.112f, btnY1, pit.ar, pit.ag, pit.ab, 1.0f, 0.005f);
             {
                 float ySize = fminf(0.030f, 0.45f * asp / 3);
                 float yW    = 3 * ySize / asp;
-                Text::draw("YES", 0.10f + (0.34f - yW)*0.5f, btnY0 + (btnY1-btnY0-ySize)*0.5f,
+                Text::draw("YES", 0.10f+(0.34f-yW)*0.5f, btnY0+(btnY1-btnY0-ySize)*0.5f,
                            ySize, yesSel?1.f:0.45f, yesSel?1.f:0.45f, yesSel?1.f:0.45f);
             }
-
             bool noSel = (curDlgSel == 1);
             drawRoundRect(0.56f, btnY0, 0.90f, btnY1,
-                noSel ? 0.40f : 0.10f,
-                noSel ? 0.10f : 0.10f,
-                noSel ? 0.10f : 0.10f,
-                0.95f, 0.014f);
+                noSel?0.40f:0.10f, 0.10f, 0.10f, 0.95f, 0.014f);
             if (noSel)
                 drawRoundRect(0.560f, btnY0, 0.572f, btnY1, 0.85f, 0.25f, 0.25f, 1.0f, 0.005f);
             {
                 float nSize = fminf(0.030f, 0.45f * asp / 2);
                 float nW    = 2 * nSize / asp;
-                Text::draw("NO", 0.56f + (0.34f - nW)*0.5f, btnY0 + (btnY1-btnY0-nSize)*0.5f,
+                Text::draw("NO", 0.56f+(0.34f-nW)*0.5f, btnY0+(btnY1-btnY0-nSize)*0.5f,
                            nSize, noSel?1.f:0.45f, noSel?0.45f:0.45f, noSel?0.45f:0.45f);
             }
         }

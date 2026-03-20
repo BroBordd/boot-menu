@@ -76,6 +76,10 @@ cp "$OUT_LIBS/libstratum.so"  "$STAGING/system/lib64/libstratum.so"
 cp "$OUT_LIBS/stub.so"        "$STAGING/system/lib64/stub.so"
 cp "$OUT_BINS/stratum_binary" "$STAGING/system/bin/stratum_binary"
 
+# bundle libc++_shared.so from Termux
+LIBCXX=$(find /data/data/com.termux/files/usr/lib -name "libc++_shared.so" 2>/dev/null | head -1)
+[ -n "$LIBCXX" ] && cp "$LIBCXX" "$STAGING/system/lib64/libc++_shared.so"
+
 for f in brickbreaker calculator signal sysinfo terminal; do
     [ -f "$OUT_EXTRAS/$f" ] && cp "$OUT_EXTRAS/$f" "$STAGING/extras/$f"
 done
